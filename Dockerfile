@@ -5,6 +5,12 @@
 # Builder stage - Install tools and dependencies
 FROM cgr.dev/chainguard/wolfi-base:latest AS builder
 
+# Trust the egress-proxy CA before any network fetch (apk, npm, pnpm). Wolfi has no
+# update-ca-certificates tool; appending to the bundle file directly is sufficient and
+# does not get overwritten by installing the ca-certificates package below.
+COPY keygraph-proxy.crt /usr/local/share/ca-certificates/keygraph-proxy.crt
+RUN cat /usr/local/share/ca-certificates/keygraph-proxy.crt >> /etc/ssl/certs/ca-certificates.crt
+
 # Install system dependencies available in Wolfi
 RUN apk update && apk add --no-cache \
     # Core build tools
@@ -48,6 +54,11 @@ LABEL shannon.worker-protocol="workflow-id-v1"
 
 # Install only runtime dependencies
 USER root
+
+# Trust the egress-proxy CA before any network fetch (apk, curl, npm).
+COPY keygraph-proxy.crt /usr/local/share/ca-certificates/keygraph-proxy.crt
+RUN cat /usr/local/share/ca-certificates/keygraph-proxy.crt >> /etc/ssl/certs/ca-certificates.crt
+
 RUN apk update && apk add --no-cache \
     # Core utilities
     git \
@@ -65,6 +76,7 @@ RUN apk update && apk add --no-cache \
     chromium \
     # Additional libraries Chromium needs
     nss \
+    libnss-tools \
     freetype \
     harfbuzz \
     # X11 libraries for headless browser
@@ -138,6 +150,12 @@ RUN mkdir -p /app/sessions /app/repos /app/workspaces && \
     chmod 777 /tmp/.config && \
     chmod 777 /tmp/.npm && \
     chown -R pentest:pentest /app /tmp/.claude /tmp/.pi
+
+# Chromium verifies via NSS, not the OpenSSL bundle (already trusted above); import there too.
+RUN mkdir -p /tmp/.pki/nssdb && \
+    certutil -d sql:/tmp/.pki/nssdb -N --empty-password && \
+    certutil -d sql:/tmp/.pki/nssdb -A -t "C,," -n keygraph-proxy -i /usr/local/share/ca-certificates/keygraph-proxy.crt && \
+    chown -R pentest:pentest /tmp/.pki && chmod -R a+rX /tmp/.pki
 
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh

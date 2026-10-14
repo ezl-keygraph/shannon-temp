@@ -61,6 +61,7 @@ function buildStealthConfig(initScriptPath: string) {
         ignoreDefaultArgs: ['--enable-automation'],
       },
       contextOptions: {
+        ignoreHTTPSErrors: true,
         viewport: { width: 1920, height: 1080 },
         locale: 'en-US',
         extraHTTPHeaders: { 'Accept-Language': 'en-US,en;q=0.9' },

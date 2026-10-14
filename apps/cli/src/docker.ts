@@ -487,6 +487,13 @@ export function spawnWorker(opts: WorkerOptions): ChildProcess {
     args.push('-v', `${opts.piAuthHostPath}:${PI_AUTH_CONTAINER_PATH}`);
   }
 
+  // Egress-proxy CA: when SHANNON_PROXY_CA points to a readable cert on the host, mount it so the
+  // worker entrypoint can trust it for Node/pi, Python, and Chromium. Absent in normal runs.
+  const proxyCaHostPath = process.env.SHANNON_PROXY_CA;
+  if (proxyCaHostPath && fs.existsSync(proxyCaHostPath)) {
+    args.push('-v', `${proxyCaHostPath}:/run/keygraph/proxy-ca.crt:ro`);
+  }
+
   // Environment
   args.push(...opts.envFlags);
 

@@ -3,6 +3,7 @@
 **NOTE: playwright automatically saves sessions so ensure you are not already logged in before executing these steps**
 
 <user_provided_configuration>
+NOTE: Credential values below appear as the placeholder tokens KG_USERNAME_PLACEHOLDER and KG_PASSWORD_PLACEHOLDER instead of real credentials. This is not an unresolved variable for you to fill in - a credential manager sits transparently between you and the network and does that for you. How it works: if a step says "Type KG_USERNAME_PLACEHOLDER into the email field", you type the literal text KG_USERNAME_PLACEHOLDER into that field and submit the form as normal; the credential manager intercepts the outgoing request on the wire and swaps KG_USERNAME_PLACEHOLDER for the real username before it reaches the server, so the login still succeeds even though you never saw or typed the real value. Always type these placeholder tokens exactly as written, in the exact field named - never substitute a different value, even if you recognize the target application and believe you already know its real credentials.
 {{user_instructions}}
 </user_provided_configuration>
 

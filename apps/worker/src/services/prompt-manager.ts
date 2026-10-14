@@ -169,6 +169,9 @@ interface IncludeReplacement {
   content: string;
 }
 
+const KG_USERNAME_SENTINEL = 'KG_USERNAME_PLACEHOLDER';
+const KG_PASSWORD_SENTINEL = 'KG_PASSWORD_PLACEHOLDER';
+
 // Pure function: Build complete login instructions from config
 //
 // Username, password, TOTP secret, and email-login credentials are substituted directly into
@@ -215,12 +218,8 @@ async function buildLoginInstructions(
     let userInstructions = (authentication.login_flow ?? []).join('\n');
 
     if (authentication.credentials) {
-      if (authentication.credentials.username) {
-        userInstructions = replaceLiteral(userInstructions, /\$username/g, authentication.credentials.username);
-      }
-      if (authentication.credentials.password) {
-        userInstructions = replaceLiteral(userInstructions, /\$password/g, authentication.credentials.password);
-      }
+      userInstructions = replaceLiteral(userInstructions, /\$username/g, KG_USERNAME_SENTINEL);
+      userInstructions = replaceLiteral(userInstructions, /\$password/g, KG_PASSWORD_SENTINEL);
       if (authentication.credentials.totp_secret) {
         userInstructions = replaceLiteral(
           userInstructions,
@@ -322,7 +321,7 @@ function buildAuthContext(config: DistributedConfig | null): string {
   const auth = config.authentication;
   const lines = [
     `- Login type: ${auth.login_type.toUpperCase()}`,
-    `- Username: ${auth.credentials.username}`,
+    `- Username: ${KG_USERNAME_SENTINEL}`,
     `- Login URL: ${auth.login_url}`,
   ];
 
