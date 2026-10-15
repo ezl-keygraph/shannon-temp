@@ -37,8 +37,8 @@
             },
             "totp_secret": {
               "type": "string",
-              "pattern": "^[A-Za-z2-7]+=*$",
-              "description": "TOTP secret for two-factor authentication (Base32 encoded, case insensitive)"
+              "pattern": "^(KG_[A-Z0-9_]+|[A-Za-z2-7]+=*)$",
+              "description": "TOTP secret for two-factor authentication: a base32-encoded seed, or a KG_ credential-manager placeholder (e.g. KG_TOTP) that the egress proxy swaps for a live code on the wire"
             },
             "email_login": {
               "type": "object",
@@ -57,8 +57,8 @@
                 },
                 "totp_secret": {
                   "type": "string",
-                  "pattern": "^[A-Za-z2-7]+=*$",
-                  "description": "TOTP secret for the email account's two-factor authentication (Base32 encoded)"
+                  "pattern": "^(KG_[A-Z0-9_]+|[A-Za-z2-7]+=*)$",
+                  "description": "TOTP secret for the email account's two-factor authentication: a base32-encoded seed, or a KG_ credential-manager placeholder (e.g. KG_EMAIL_TOTP) that the egress proxy swaps for a live code on the wire"
                 }
               },
               "required": ["address", "password"],
