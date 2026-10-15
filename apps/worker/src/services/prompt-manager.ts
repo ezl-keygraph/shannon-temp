@@ -169,14 +169,20 @@ interface IncludeReplacement {
   content: string;
 }
 
-const KG_USERNAME_SENTINEL = 'KG_USERNAME_PLACEHOLDER';
-const KG_PASSWORD_SENTINEL = 'KG_PASSWORD_PLACEHOLDER';
+const KG_USERNAME_SENTINEL = 'KG_USERNAME';
+const KG_PASSWORD_SENTINEL = 'KG_PASSWORD';
+const KG_EMAIL_USERNAME_SENTINEL = 'KG_EMAIL_USERNAME';
+const KG_EMAIL_PASSWORD_SENTINEL = 'KG_EMAIL_PASSWORD';
+const KG_TOTP_SENTINEL = 'KG_TOTP';
+const KG_EMAIL_TOTP_SENTINEL = 'KG_EMAIL_TOTP';
 
 // Pure function: Build complete login instructions from config
 //
-// Username, password, TOTP secret, and email-login credentials are substituted directly into
-// the returned string, which only ever lives in process memory on its way into the prompt sent
-// to the model. Nothing in this function writes credentials to a file.
+// Username, password, email-login username/password, and the TOTP seeds are all replaced with
+// placeholder sentinels (KG_*). An on-the-wire credential manager swaps in the real values; for
+// TOTP it computes the current code from the host-held seed at request time. So no real credential
+// or seed ever enters the prompt. The returned string only ever lives in process memory on its way
+// into the prompt sent to the model. Nothing in this function writes credentials to a file.
 async function buildLoginInstructions(
   authentication: Authentication,
   logger: ActivityLogger,
@@ -221,41 +227,20 @@ async function buildLoginInstructions(
       userInstructions = replaceLiteral(userInstructions, /\$username/g, KG_USERNAME_SENTINEL);
       userInstructions = replaceLiteral(userInstructions, /\$password/g, KG_PASSWORD_SENTINEL);
       if (authentication.credentials.totp_secret) {
-        userInstructions = replaceLiteral(
-          userInstructions,
-          /\$totp/g,
-          `generated TOTP code using secret "${authentication.credentials.totp_secret}"`,
-        );
+        userInstructions = replaceLiteral(userInstructions, /\$totp/g, KG_TOTP_SENTINEL);
       }
       if (authentication.credentials.email_login?.address) {
-        userInstructions = replaceLiteral(
-          userInstructions,
-          /\$email_address/g,
-          authentication.credentials.email_login.address,
-        );
+        userInstructions = replaceLiteral(userInstructions, /\$email_address/g, KG_EMAIL_USERNAME_SENTINEL);
       }
       if (authentication.credentials.email_login?.password) {
-        userInstructions = replaceLiteral(
-          userInstructions,
-          /\$email_password/g,
-          authentication.credentials.email_login.password,
-        );
+        userInstructions = replaceLiteral(userInstructions, /\$email_password/g, KG_EMAIL_PASSWORD_SENTINEL);
       }
       if (authentication.credentials.email_login?.totp_secret) {
-        userInstructions = replaceLiteral(
-          userInstructions,
-          /\$email_totp/g,
-          `generated TOTP code using secret "${authentication.credentials.email_login.totp_secret}"`,
-        );
+        userInstructions = replaceLiteral(userInstructions, /\$email_totp/g, KG_EMAIL_TOTP_SENTINEL);
       }
     }
 
     loginInstructions = replaceLiteral(loginInstructions, /{{user_instructions}}/g, userInstructions);
-
-    // 5. Replace TOTP secret placeholder if present in template
-    if (authentication.credentials?.totp_secret) {
-      loginInstructions = replaceLiteral(loginInstructions, /{{totp_secret}}/g, authentication.credentials.totp_secret);
-    }
 
     return loginInstructions;
   } catch (error) {
