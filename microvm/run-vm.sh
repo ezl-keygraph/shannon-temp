@@ -74,6 +74,7 @@ fi
   echo "SHANNON_AI_MODEL=${MODEL}"
   echo "SHANNON_AI_API_KEY=${AKEY}"
   echo "ANTHROPIC_API_KEY=${AKEY}"
+  echo "NODE_OPTIONS=--max-old-space-size=${NODE_MAX_OLD_SPACE:-4096}"
   [ -n "${SHANNON_AI_BASE_URL:-}" ] && echo "SHANNON_AI_BASE_URL=${SHANNON_AI_BASE_URL}"
   echo "VM_CMD=\"node apps/worker/dist/temporal/worker.js ${TARGET} ${REPO} --task-queue ${QUEUE} ${EXTRA}\""
 } > "$MNT/etc/vm.env"
