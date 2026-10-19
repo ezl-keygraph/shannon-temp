@@ -60,6 +60,13 @@ iptables -C FORWARD -i "$TAP" -o "$IFACE" -j ACCEPT 2>/dev/null \
   || iptables -A FORWARD -i "$TAP" -o "$IFACE" -j ACCEPT
 iptables -C FORWARD -i "$IFACE" -o "$TAP" -m state --state RELATED,ESTABLISHED -j ACCEPT 2>/dev/null \
   || iptables -A FORWARD -i "$IFACE" -o "$TAP" -m state --state RELATED,ESTABLISHED -j ACCEPT
+# Clamp TCP MSS to the path MTU. The guest's eth0 is 1500, but the host egress
+# path can be smaller (overlay/tunnelled uplinks are common on cloud hosts), so
+# a full-size TLS handshake (large ServerHello + certificate chain, e.g. CDN-
+# fronted pi.dev) gets PMTU-blackholed and the connection stalls until timeout.
+# Clamping makes the guest advertise an MSS the path can actually carry.
+iptables -t mangle -C FORWARD -o "$IFACE" -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu 2>/dev/null \
+  || iptables -t mangle -A FORWARD -o "$IFACE" -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
 
 echo "[run-vm] injecting /etc/vm.env into the rootfs"
 MNT="$(mktemp -d)"
