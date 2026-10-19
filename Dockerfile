@@ -66,9 +66,11 @@ RUN apk update && apk add --no-cache \
     curl \
     ca-certificates \
     shadow \
-    # Boot the image's filesystem directly as a Firecracker microVM:
-    # util-linux provides mount(8)/mountpoint(8); iproute2 provides ip(8).
-    util-linux \
+    # Boot the image's filesystem directly as a Firecracker microVM.
+    # Wolfi splits util-linux, so the mount(8)/umount(8) commands are their own
+    # packages (the base util-linux package does not ship them). iproute2 gives ip(8).
+    mount \
+    umount \
     iproute2 \
     # Typst tarball decompression
     xz \
