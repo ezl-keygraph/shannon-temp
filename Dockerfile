@@ -66,6 +66,10 @@ RUN apk update && apk add --no-cache \
     curl \
     ca-certificates \
     shadow \
+    # Boot the image's filesystem directly as a Firecracker microVM:
+    # util-linux provides mount(8)/mountpoint(8); iproute2 provides ip(8).
+    util-linux \
+    iproute2 \
     # Typst tarball decompression
     xz \
     # Language runtimes (minimal)
@@ -159,6 +163,13 @@ RUN mkdir -p /tmp/.pki/nssdb && \
 
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
+
+# microVM PID 1: when this image's filesystem is booted directly as a Firecracker
+# rootfs (init=/sbin/vm-init), it mounts the kernel pseudo-filesystems, restores
+# the environment below, loads /etc/vm.env, and execs the worker. Unused when the
+# image runs as an ordinary container (ENTRYPOINT/CMD below still apply there).
+COPY microvm/vm-init.sh /sbin/vm-init
+RUN chmod +x /sbin/vm-init
 
 # Set environment variables
 ENV NODE_ENV=production
