@@ -75,6 +75,10 @@ if [ -n "$REPO_GIT" ]; then
   echo "[run-vm] cloning $REPO_GIT into guest ${REPO}"
   rm -rf "${MNT}${REPO}"
   git clone --depth 1 "$REPO_GIT" "${MNT}${REPO}"
+  # The worker runs as the unprivileged image user (pentest, uid/gid 1001) and
+  # writes scratch config into the repo (e.g. .playwright). The host cloned it as
+  # root, so hand ownership to the worker uid or those writes fail with EACCES.
+  chown -R 1001:1001 "${MNT}${REPO}"
 fi
 {
   echo "TEMPORAL_ADDRESS=${TEMPORAL}"
